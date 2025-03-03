@@ -13,8 +13,9 @@ pantry, manage shopping lists, and find meals that suit their dietary preference
 ● Home Cooks & Enthusiasts – Experiment with new recipes. 
 ● Busy Individuals – Get quick, easy meal ideas. 
 ● Beginners – Learn to cook with step-by-step guidance. 
-⭐
- Key Features 
+
+
+⭐ Key Features 
 ✔ Ingredient-Based Search – Get meal suggestions based on what you have. 
 ✔ Dietary Filters – Customize meals to match preferences. 
 ✔ Smart Shopping List – Auto-generate missing ingredient lists. 
@@ -36,7 +37,8 @@ Developed with Flutter for mobile.
  Unique Selling Point 
 Unlike other apps, ChefBuddy provides real-time, ingredient-based recipe suggestions with personalized 
 recommendations. 
-⚠
+
+
  Challenges 
 ● Ingredient Matching – Handling variations (e.g., “tomato” vs. “cherry tomato”). 
 ● Database Scalability – Managing a growing recipe library. 
