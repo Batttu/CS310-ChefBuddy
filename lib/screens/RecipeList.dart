@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts package
 import '../widgets/SearchBar.dart' as CustomSearchBar; // Alias the custom SearchBar
 import 'RecipeDetails.dart'; // Import RecipeDetails screen
+import 'SearchFilter.dart';
+
 
 void main() {
   runApp(MaterialApp(
@@ -70,6 +72,10 @@ class _RecipeListState extends State<RecipeList> {
             icon: Icon(Icons.filter_list, color: Colors.black), 
             onPressed: () {
               // filter functionality here
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchFilter()),
+              );
             },
           ),
         ],
