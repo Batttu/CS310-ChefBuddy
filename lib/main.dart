@@ -4,21 +4,28 @@ import 'screens/RecipeList.dart';
 import 'screens/CreateRecipe.dart';
 import 'screens/ShoppingList.dart';
 import 'screens/UserProfile.dart';
-import 'widgets/CustomNavigationBar.dart'; // Import the custom navigation bar
+import 'screens/LoginSignup.dart';
+import 'screens/RecipeDetails.dart';
+import 'screens/RecipeOwnerProfile.dart';
+import 'screens/SearchFilter.dart';
+import 'widgets/CustomNavigationBar.dart';
 
 void main() {
-  runApp(ChefBuddyApp());
+  runApp(const ChefBuddyApp());
 }
 
 class ChefBuddyApp extends StatelessWidget {
+  const ChefBuddyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Chef Buddy',
       theme: ThemeData(
-        fontFamily: 'Rubik', // Use Rubik font
-        scaffoldBackgroundColor: Colors.white, // Set default background to white
-        primaryColor: Color.fromARGB(255, 186, 104, 200), // Pastel purple as primary color
+        fontFamily: 'WinkyRough',
+        scaffoldBackgroundColor: Colors.white,
+        primaryColor: const Color.fromARGB(255, 186, 104, 200),
         colorScheme: ColorScheme.fromSwatch().copyWith(
           primary: const Color.fromARGB(255, 186, 104, 200),
           secondary: const Color.fromARGB(255, 230, 210, 255),
@@ -53,14 +60,16 @@ class ChefBuddyApp extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
   @override
-  _MainScreenState createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = <Widget>[
+  final List<Widget> _pages = [
     HomePage(),
     CreateRecipe(),
     ShoppingList(),
@@ -79,7 +88,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages, // Keep all pages in memory for smooth transitions
+        children: _pages,
       ),
       bottomNavigationBar: CustomNavigationBar(
         currentIndex: _selectedIndex,

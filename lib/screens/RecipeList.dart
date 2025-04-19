@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts package
 import '../widgets/SearchBar.dart' as CustomSearchBar; // Alias the custom SearchBar
 import 'RecipeDetails.dart'; // Import RecipeDetails screen
+import 'SearchFilter.dart';
+
 
 void main() {
   runApp(MaterialApp(
@@ -68,9 +70,18 @@ class _RecipeListState extends State<RecipeList> {
         actions: [
           IconButton(
             icon: Icon(Icons.filter_list, color: Colors.black), 
-            onPressed: () {
-              // filter functionality here
+            onPressed: () async {
+              final filters = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchFilter()),
+              );
+
+              if (filters != null) {
+                print('Selected filters: $filters');
+                // You can filter your recipe data based on filters['diet'], filters['cookTime'], etc.
+              }
             },
+
           ),
         ],
       ),
@@ -130,7 +141,11 @@ class _RecipeListState extends State<RecipeList> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RecipeDetails(recipe: recipe), // Navigate to RecipeDetails
+                        builder: (context) => RecipeDetails(
+                                recipeName: recipe['name'] ?? '',
+                                recipeAuthor: 'Chef Default', // or get from recipe data
+                                 instructions: '1. Add your default steps here.', // or from recipe data
+                            )            ,
                       ),
                     );
                   },
