@@ -1,4 +1,3 @@
-// -------------------- ProductDetailScreen.dart --------------------
 import 'package:flutter/material.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -322,7 +321,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
         onTap: (index) {
           if (index == 0) {
-            Navigator.pop(context);
+            Navigator.pushNamed(context, '/home');
           }
         },
         type: BottomNavigationBarType.fixed,

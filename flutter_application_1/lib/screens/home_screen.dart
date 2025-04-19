@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'product_detail_screen.dart';
+import 'package:flutter_application_1/utils/app_colors.dart';
+import 'package:flutter_application_1/utils/app_text_styles.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,24 +12,51 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String selectedCategory = '';
 
-  final List<Map<String, String>> recipes = [
+  final List<Map<String, String>> forYouRecipes = [
     {
       'title': 'Indonesian beef burger',
       'author': 'Adrianna Cull',
       'category': 'Lunch',
-      'instructions': '1. Season beef\n2. Cook patties\n3. Assemble burger with bun and vegetables.'
+      'instructions': '1. Season beef\n2. Cook patties\n3. Assemble burger with bun and vegetables.',
+      'image': 'https://images.unsplash.com/photo-1613160775054-d4a634592b7f?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     },
     {
       'title': 'Home made cute pancake',
       'author': 'James Wolden',
       'category': 'Breakfast',
-      'instructions': '1. Mix ingredients\n2. Heat pan\n3. Pour batter and flip.'
+      'instructions': '1. Mix ingredients\n2. Heat pan\n3. Pour batter and flip.',
+      'image': 'https://images.unsplash.com/photo-1659549591799-0ba408a9b29a?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     },
     {
       'title': 'How to make fried crab',
       'author': 'Paprika Anr',
       'category': 'Dinner',
-      'instructions': '1. Clean crabs\n2. Season and flour\n3. Deep fry till golden.'
+      'instructions': '1. Clean crabs\n2. Season and flour\n3. Deep fry till golden.',
+      'image': 'https://plus.unsplash.com/premium_photo-1719611418753-526e29c9baff?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+    },
+  ];
+
+  final List<Map<String, String>> recipes = [
+    {
+      'title': 'Spaghetti Bolognese',
+      'author': 'Anna Smith',
+      'category': 'Lunch',
+      'instructions': '1. Cook pasta\n2. Prepare sauce\n3. Mix together.',
+      'image': 'assets/images/s.jpg'
+    },
+    {
+      'title': 'Classic Caesar Salad',
+      'author': 'Julia Green',
+      'category': 'Dinner',
+      'instructions': '1. Chop lettuce\n2. Add dressing\n3. Serve with croutons.',
+      'image': 'assets/images/c.jpg'
+    },
+    {
+      'title': 'Omelette with herbs',
+      'author': 'Tom Hardy',
+      'category': 'Breakfast',
+      'instructions': '1. Beat eggs\n2. Add herbs\n3. Cook on skillet.',
+      'image': 'assets/images/o.webp'
     },
   ];
 
@@ -38,8 +66,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ? recipes
         : recipes.where((r) => r['category'] == selectedCategory).toList();
 
+    final filteredForYou = selectedCategory.isEmpty
+        ? forYouRecipes
+        : forYouRecipes.where((r) => r['category'] == selectedCategory).toList();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.defaultBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -47,11 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              const Center(
+              Center(
                 child: Text(
                   'Find best recipes\nfor cooking',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.heading,
                 ),
               ),
               const SizedBox(height: 20),
@@ -70,9 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 30),
               categorySection(),
               const SizedBox(height: 20),
-              recipeSection("For you", filteredRecipes),
+              recipeSection("For you", filteredForYou, true),
               const SizedBox(height: 30),
-              recipeSection("Recipes", filteredRecipes),
+              recipeSection("Recipes", filteredRecipes, true),
               const SizedBox(height: 80),
             ],
           ),
@@ -142,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget recipeSection(String title, List<Map<String, String>> recipeList) {
+  Widget recipeSection(String title, List<Map<String, String>> recipeList, bool useImage) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -161,15 +193,14 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: recipeList.length,
             itemBuilder: (context, index) => GestureDetector(
               onTap: () {
-                Navigator.push(
+                Navigator.pushNamed(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailScreen(
-                      recipeName: recipeList[index]['title']!,
-                      recipeAuthor: recipeList[index]['author']!,
-                      instructions: recipeList[index]['instructions']!,
-                    ),
-                  ),
+                  '/detail',
+                  arguments: {
+                    'recipeName': recipeList[index]['title']!,
+                    'recipeAuthor': recipeList[index]['author']!,
+                    'instructions': recipeList[index]['instructions']!,
+                  },
                 );
               },
               child: Container(
@@ -178,21 +209,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: Colors.grey[300],
+                  image: recipeList[index].containsKey('image')
+                      ? DecorationImage(
+                          image: recipeList[index]['image']!.startsWith('assets/')
+                              ? AssetImage(recipeList[index]['image']!) as ImageProvider
+                              : NetworkImage(recipeList[index]['image']!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Padding(
+                child: Container(
                   padding: const EdgeInsets.all(8.0),
+                  decoration: useImage
+                      ? BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.6),
+                              Colors.transparent
+                            ],
+                          ),
+                        )
+                      : null,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
                         recipeList[index]['title']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: useImage ? Colors.white : Colors.black,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         recipeList[index]['author']!,
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: useImage ? Colors.white70 : Colors.black54,
+                        ),
                       ),
                     ],
                   ),

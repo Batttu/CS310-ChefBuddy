@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart'; // Make sure this path matches your folder
+import 'screens/home_screen.dart';
+import 'screens/product_detail_screen.dart';
 
 void main() {
   runApp(const CheffBuddyApp());
@@ -12,11 +13,27 @@ class CheffBuddyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Cheff Buddy',
       theme: ThemeData(
-        primarySwatch: Colors.orange,
+        fontFamily: 'WinkyRough', 
       ),
-      home: const HomeScreen(),
+      initialRoute: '/home',
+      routes: {
+        '/home': (context) => const HomeScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/detail') {
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(
+              recipeName: args['recipeName']!,
+              recipeAuthor: args['recipeAuthor']!,
+              instructions: args['instructions']!,
+            ),
+          );
+        }
+        return null;
+      },
     );
   }
 }
+
