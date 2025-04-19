@@ -355,5 +355,3 @@ packages:
 sdks:
   dart: ">=3.7.0 <4.0.0"
   flutter: ">=3.27.0"
-name: chef_buddy
-icon: chef_buddy_icon
