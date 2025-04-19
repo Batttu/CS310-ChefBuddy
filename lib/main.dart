@@ -20,11 +20,34 @@ class ChefBuddyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white, // Set default background to white
         primaryColor: Color.fromARGB(255, 186, 104, 200), // Pastel purple as primary color
         colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: Color.fromARGB(255, 186, 104, 200), // Pastel purple
-          secondary: Color.fromARGB(255, 230, 210, 255), // Light pastel purple
+          primary: const Color.fromARGB(255, 186, 104, 200),
+          secondary: const Color.fromARGB(255, 230, 210, 255),
         ),
       ),
-      home: MainScreen(),
+      initialRoute: '/login', // Set the initial route to the LoginSignup screen
+      routes: {
+        '/main': (context) => const MainScreen(),
+        '/login': (context) => LoginSignup(),
+        '/create': (context) => CreateRecipe(),
+        '/shopping': (context) => ShoppingList(),
+        '/recipes': (context) => RecipeList(),
+        '/profile': (context) => UserProfile(),
+        '/ownerProfile': (context) => RecipeOwnerProfile(),
+        '/search': (context) => SearchFilter(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/details') {
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder: (context) => RecipeDetails(
+              recipeName: args['recipeName']!,
+              recipeAuthor: args['recipeAuthor']!,
+              instructions: args['instructions']!,
+            ),
+          );
+        }
+        return null;
+      },
     );
   }
 }
