@@ -11,6 +11,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedCategory = '';
+  String searchQuery = '';
 
   final List<Map<String, String>> forYouRecipes = [
     {
@@ -62,13 +63,17 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredRecipes = selectedCategory.isEmpty
-        ? recipes
-        : recipes.where((r) => r['category'] == selectedCategory).toList();
+    final filteredRecipes = recipes.where((r) {
+      final matchCategory = selectedCategory.isEmpty || r['category'] == selectedCategory;
+      final matchSearch = searchQuery.isEmpty || r['title']!.toLowerCase().contains(searchQuery.toLowerCase());
+      return matchCategory && matchSearch;
+    }).toList();
 
-    final filteredForYou = selectedCategory.isEmpty
-        ? forYouRecipes
-        : forYouRecipes.where((r) => r['category'] == selectedCategory).toList();
+    final filteredForYou = forYouRecipes.where((r) {
+      final matchCategory = selectedCategory.isEmpty || r['category'] == selectedCategory;
+      final matchSearch = searchQuery.isEmpty || r['title']!.toLowerCase().contains(searchQuery.toLowerCase());
+      return matchCategory && matchSearch;
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.defaultBackground,
@@ -88,6 +93,11 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: 'Search recipes',
                   prefixIcon: const Icon(Icons.search),
@@ -247,3 +257,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
