@@ -141,7 +141,11 @@ class _RecipeListState extends State<RecipeList> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RecipeDetails(recipe: recipe), // Navigate to RecipeDetails
+                        builder: (context) => RecipeDetails(
+                                recipeName: recipe['name'] ?? '',
+                                recipeAuthor: 'Chef Default', // or get from recipe data
+                                 instructions: '1. Add your default steps here.', // or from recipe data
+                            )            ,
                       ),
                     );
                   },
