@@ -1,55 +1,113 @@
 import 'package:flutter/material.dart';
 
-class LoginSignup extends StatelessWidget {
+class LoginSignup extends StatefulWidget {
+  const LoginSignup({super.key});
+
+  @override
+  State<LoginSignup> createState() => _LoginSignupState();
+}
+
+class _LoginSignupState extends State<LoginSignup> {
+  final _signupFormKey = GlobalKey<FormState>();
+  final TextEditingController _loginUsername = TextEditingController();
+  final TextEditingController _loginPassword = TextEditingController();
+  final TextEditingController _signupUsername = TextEditingController();
+  final TextEditingController _signupPassword = TextEditingController();
+  final TextEditingController _signupConfirm = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Welcome to ChefBuddy')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'ChefBuddy',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+            Center(
+              child: Text("👨‍🍳 ChefBuddy",
+                  style: theme.textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 30),
+            Text("Login", style: theme.textTheme.titleLarge),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _loginUsername,
+              decoration: const InputDecoration(labelText: 'Username'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _loginPassword,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                if (_loginUsername.text.isNotEmpty &&
+                    _loginPassword.text.isNotEmpty) {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              },
+              child: const Text("Login"),
+            ),
+            TextButton(
+              onPressed: () {},
+              child: const Text("Forgot your password?"),
             ),
             const SizedBox(height: 20),
-
-            // Login Button
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to MainScreen after login
-                Navigator.pushNamed(context, '/main');
-              },
-              child: const Text('Login'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-              ),
-            ),
+            const Divider(),
             const SizedBox(height: 10),
-
-            // Sign Up Button
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to MainScreen after sign up
-                Navigator.pushNamed(context, '/main');
-              },
-              child: const Text('Sign Up'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-              ),
-            ),
+            Text("Sign Up", style: theme.textTheme.titleLarge),
             const SizedBox(height: 10),
-
-            // Login as Guest Button
-            TextButton(
-              onPressed: () {
-                // Navigate to MainScreen as a guest
-                Navigator.pushNamed(context, '/main');
-              },
-              child: const Text('Login as Guest'),
+            Form(
+              key: _signupFormKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _signupUsername,
+                    decoration: const InputDecoration(labelText: 'Username'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return "Username required";
+                      if (value.length > 20) return "Max 20 characters allowed";
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _signupPassword,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? "Password required"
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _signupConfirm,
+                    obscureText: true,
+                    decoration:
+                        const InputDecoration(labelText: 'Confirm Password'),
+                    validator: (value) {
+                      if (value != _signupPassword.text)
+                        return "Passwords do not match";
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_signupFormKey.currentState!.validate()) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    },
+                    child: const Text("Sign Up"),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import '../widgets/CustomNavigationBar.dart';
 
 class UserProfile extends StatefulWidget {
+  const UserProfile({super.key});
+
   @override
-  _UserProfileState createState() => _UserProfileState();
+  State<UserProfile> createState() => _UserProfileState();
 }
 
 class _UserProfileState extends State<UserProfile> {
@@ -10,8 +13,8 @@ class _UserProfileState extends State<UserProfile> {
   String username = 'username';
   String biography = 'Short biography of user';
 
-  bool isSelectMode = false; // Toggle for selection mode
-  Set<int> selectedRecipes = {}; // Store selected recipe indices
+  bool isSelectMode = false;
+  Set<int> selectedRecipes = {};
 
   List<String> favouriteRecipes = [
     'Favourite Recipe 1',
@@ -36,7 +39,8 @@ class _UserProfileState extends State<UserProfile> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Profile'),
+          title: Text('Edit Profile',
+              style: Theme.of(context).textTheme.titleLarge),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -51,7 +55,8 @@ class _UserProfileState extends State<UserProfile> {
                 ),
                 TextField(
                   controller: bioController,
-                  decoration: const InputDecoration(labelText: 'Short Biography'),
+                  decoration:
+                      const InputDecoration(labelText: 'Short Biography'),
                   maxLines: 3,
                 ),
               ],
@@ -59,9 +64,7 @@ class _UserProfileState extends State<UserProfile> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -84,22 +87,25 @@ class _UserProfileState extends State<UserProfile> {
   void _toggleSelectMode() {
     setState(() {
       isSelectMode = !isSelectMode;
-      selectedRecipes.clear(); // Clear selections when exiting select mode
+      selectedRecipes.clear();
     });
   }
 
   void _removeSelectedRecipes(List<String> recipes) {
     setState(() {
-      recipes.removeWhere((recipe) => selectedRecipes.contains(recipes.indexOf(recipe)));
+      recipes.removeWhere(
+          (recipe) => selectedRecipes.contains(recipes.indexOf(recipe)));
       selectedRecipes.clear();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Profile'),
+        title: Text('User Profile', style: theme.textTheme.titleLarge),
         actions: [
           IconButton(
             icon: Icon(isSelectMode ? Icons.cancel : Icons.select_all),
@@ -112,7 +118,6 @@ class _UserProfileState extends State<UserProfile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Header
             Row(
               children: [
                 const CircleAvatar(radius: 40),
@@ -120,40 +125,38 @@ class _UserProfileState extends State<UserProfile> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    Text(username, style: const TextStyle(color: Colors.grey)),
+                    Text(name, style: theme.textTheme.headlineSmall),
+                    Text(username,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.grey)),
                     const SizedBox(height: 8),
-                    Text(biography, style: const TextStyle(fontSize: 14)),
+                    Text(biography, style: theme.textTheme.bodySmall),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 30),
-
-            // Stats Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatColumn('96', 'Months with ChefBuddy'),
+                _buildStat('96', 'Months with ChefBuddy'),
                 const SizedBox(width: 16),
-                _buildStatColumn('27', 'Recipes Contributed'),
+                _buildStat('27', 'Recipes Contributed'),
                 const SizedBox(width: 16),
-                _buildStatColumn('83', 'Ingredients used'),
+                _buildStat('83', 'Ingredients used'),
               ],
             ),
             const SizedBox(height: 30),
-
-            // Tabs for Favourite Recipes and My Recipes
             DefaultTabController(
               length: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TabBar(
-                    labelColor: Colors.deepPurple,
+                  TabBar(
+                    labelColor: theme.colorScheme.primary,
                     unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.deepPurple,
-                    tabs: [
+                    indicatorColor: theme.colorScheme.primary,
+                    tabs: const [
                       Tab(text: 'Favourite Recipes'),
                       Tab(text: 'My Recipes'),
                     ],
@@ -163,9 +166,7 @@ class _UserProfileState extends State<UserProfile> {
                     height: 300,
                     child: TabBarView(
                       children: [
-                        // Favourite Recipes Grid
                         _buildRecipeGrid(favouriteRecipes),
-                        // My Recipes Grid
                         _buildRecipeGrid(myRecipes),
                       ],
                     ),
@@ -176,39 +177,62 @@ class _UserProfileState extends State<UserProfile> {
           ],
         ),
       ),
-      floatingActionButton: isSelectMode
-          ? FloatingActionButton(
-              onPressed: () {
-                // Remove selected recipes from the active tab
-                final tabIndex = DefaultTabController.of(context)?.index ?? 0;
-                if (tabIndex == 0) {
-                  _removeSelectedRecipes(favouriteRecipes);
-                } else {
-                  _removeSelectedRecipes(myRecipes);
-                }
-              },
-              child: const Icon(Icons.delete),
-            )
-          : FloatingActionButton(
-              onPressed: _editProfile,
-              child: const Icon(Icons.edit),
-            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          final tabIndex = DefaultTabController.of(context)?.index ?? 0;
+          if (isSelectMode) {
+            if (tabIndex == 0) {
+              _removeSelectedRecipes(favouriteRecipes);
+            } else {
+              _removeSelectedRecipes(myRecipes);
+            }
+          } else {
+            _editProfile();
+          }
+        },
+        backgroundColor: theme.colorScheme.primary,
+        child: Icon(isSelectMode ? Icons.delete : Icons.edit),
+      ),
+      bottomNavigationBar: CustomNavigationBar(
+        currentIndex: 4,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 1:
+              Navigator.pushReplacementNamed(context, '/add');
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/cart');
+              break;
+            case 3:
+              Navigator.pushReplacementNamed(context, '/recipes');
+              break;
+            case 4:
+              break;
+          }
+        },
+      ),
     );
   }
 
-  // Helper method to build stats column
-  Widget _buildStatColumn(String value, String label) {
+  Widget _buildStat(String value, String label) {
+    final theme = Theme.of(context);
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(label, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+        Text(label,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
       ],
     );
   }
 
-  // Helper method to build recipe grid
   Widget _buildRecipeGrid(List<String> recipes) {
+    final theme = Theme.of(context);
     return GridView.builder(
       itemCount: recipes.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -223,24 +247,27 @@ class _UserProfileState extends State<UserProfile> {
           onTap: isSelectMode
               ? () {
                   setState(() {
-                    if (isSelected) {
-                      selectedRecipes.remove(index);
-                    } else {
-                      selectedRecipes.add(index);
-                    }
+                    isSelected
+                        ? selectedRecipes.remove(index)
+                        : selectedRecipes.add(index);
                   });
                 }
               : null,
           child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            color: isSelected ? Colors.deepPurple.withOpacity(0.5) : Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.5)
+                : Colors.white,
             child: Stack(
               children: [
                 Center(
                   child: Text(
                     recipes[index],
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
                   ),
                 ),
                 if (isSelectMode)
@@ -248,13 +275,11 @@ class _UserProfileState extends State<UserProfile> {
                     alignment: Alignment.topRight,
                     child: Checkbox(
                       value: isSelected,
-                      onChanged: (bool? value) {
+                      onChanged: (value) {
                         setState(() {
-                          if (value == true) {
-                            selectedRecipes.add(index);
-                          } else {
-                            selectedRecipes.remove(index);
-                          }
+                          value == true
+                              ? selectedRecipes.add(index)
+                              : selectedRecipes.remove(index);
                         });
                       },
                     ),
