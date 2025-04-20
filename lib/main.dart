@@ -31,10 +31,10 @@ class ChefBuddyApp extends StatelessWidget {
           secondary: const Color.fromARGB(255, 230, 210, 255),
         ),
       ),
-      initialRoute: '/login', // Set the initial route to the LoginSignup screen
+      initialRoute: '/login',
       routes: {
+        '/login': (context) => const LoginSignup(),
         '/main': (context) => const MainScreen(),
-        '/login': (context) => LoginSignup(),
         '/create': (context) => CreateRecipe(),
         '/shopping': (context) => ShoppingList(),
         '/recipes': (context) => RecipeList(),

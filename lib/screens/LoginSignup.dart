@@ -48,7 +48,7 @@ class _LoginSignupState extends State<LoginSignup> {
               onPressed: () {
                 if (_loginUsername.text.isNotEmpty &&
                     _loginPassword.text.isNotEmpty) {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/main');
                 }
               },
               child: const Text("Login"),
@@ -101,7 +101,7 @@ class _LoginSignupState extends State<LoginSignup> {
                   ElevatedButton(
                     onPressed: () {
                       if (_signupFormKey.currentState!.validate()) {
-                        Navigator.pushReplacementNamed(context, '/home');
+                        Navigator.pushReplacementNamed(context, '/main');
                       }
                     },
                     child: const Text("Sign Up"),
