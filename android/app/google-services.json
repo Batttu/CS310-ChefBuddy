@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860706500061",
+    "project_id": "chefbuddy-94681",
+    "storage_bucket": "chefbuddy-94681.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860706500061:android:9b3063492c69fb7a119a34",
+        "android_client_info": {
+          "package_name": "com.example.namer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvPeS4SW_Dqa8WdjYjIxTF8CuT7wCVAkg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

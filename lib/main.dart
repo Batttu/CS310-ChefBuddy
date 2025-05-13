@@ -1,3 +1,4 @@
+import 'package:chef_buddy/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'screens/HomePage.dart';
 import 'screens/RecipeList.dart';
@@ -9,9 +10,24 @@ import 'screens/RecipeDetails.dart';
 import 'screens/RecipeOwnerProfile.dart';
 import 'screens/SearchFilter.dart';
 import 'widgets/CustomNavigationBar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart'; 
+import 'providers/RecipeProvider.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-void main() {
-  runApp(const ChefBuddyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => RecipeProvider()),
+      ],
+      child: const ChefBuddyApp(),
+    ),
+  );
 }
 
 class ChefBuddyApp extends StatelessWidget {

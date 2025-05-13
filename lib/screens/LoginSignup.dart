@@ -1,6 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LoginSignup extends StatelessWidget {
+class LoginSignup extends StatefulWidget {
+  @override
+  _LoginSignupState createState() => _LoginSignupState();
+}
+
+class _LoginSignupState extends State<LoginSignup> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Show error messages in a snackbar
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Login method
+  Future<void> _login() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      Navigator.pushNamed(context, '/main');
+    } on FirebaseAuthException catch (e) {
+      _showError(e.message ?? 'Login failed');
+    }
+  }
+
+  // Sign Up method
+  Future<void> _signUp() async {
+    try {
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // Store user info in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'email': _emailController.text.trim(),
+        'createdAt': Timestamp.now(),
+        'isGuest': false,
+      });
+
+      Navigator.pushNamed(context, '/main');
+    } on FirebaseAuthException catch (e) {
+      _showError(e.message ?? 'Sign up failed');
+    }
+  }
+
+  // Guest login
+  Future<void> _loginAsGuest() async {
+    try {
+      await FirebaseFirestore.instance.collection('guests').add({
+        'loginTime': Timestamp.now(),
+      });
+
+      Navigator.pushNamed(context, '/main');
+    } catch (e) {
+      _showError('Guest login failed');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,12 +86,31 @@ class LoginSignup extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
+            // Email input
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Password input
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             // Login Button
             ElevatedButton(
-              onPressed: () {
-                // Navigate to MainScreen after login
-                Navigator.pushNamed(context, '/main');
-              },
+              onPressed: _login,
               child: const Text('Login'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -32,10 +120,7 @@ class LoginSignup extends StatelessWidget {
 
             // Sign Up Button
             ElevatedButton(
-              onPressed: () {
-                // Navigate to MainScreen after sign up
-                Navigator.pushNamed(context, '/main');
-              },
+              onPressed: _signUp,
               child: const Text('Sign Up'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -43,12 +128,9 @@ class LoginSignup extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // Login as Guest Button
+            // Guest Login Button
             TextButton(
-              onPressed: () {
-                // Navigate to MainScreen as a guest
-                Navigator.pushNamed(context, '/main');
-              },
+              onPressed: _loginAsGuest,
               child: const Text('Login as Guest'),
             ),
           ],
