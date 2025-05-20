@@ -138,15 +138,15 @@ class _RecipeListState extends State<RecipeList> {
 
                 return GestureDetector(
                   onTap: () {
-                    Navigator.push(
+                    // TODO: Replace this with real Firestore recipeId when you're ready
+                    final fakeRecipeId = recipe['name']!.toLowerCase().replaceAll(' ', '_');
+
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => RecipeDetails(
-                                recipeName: recipe['name'] ?? '',
-                                recipeAuthor: 'Chef Default', // or get from recipe data
-                                 instructions: '1. Add your default steps here.', // or from recipe data
-                            )            ,
-                      ),
+                      '/details',
+                      arguments: {
+                        'recipeId': fakeRecipeId,
+                      },
                     );
                   },
                   child: Card(

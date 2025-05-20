@@ -12,8 +12,9 @@ import 'screens/SearchFilter.dart';
 import 'widgets/CustomNavigationBar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart'; 
-import 'providers/RecipeProvider.dart';
+import 'package:provider/provider.dart';
+import 'providers/recipe_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -47,7 +48,7 @@ class ChefBuddyApp extends StatelessWidget {
           secondary: const Color.fromARGB(255, 230, 210, 255),
         ),
       ),
-      initialRoute: '/login', // Set the initial route to the LoginSignup screen
+      home: const AuthGate(), // 👈 Replaces initialRoute for better auth flow
       routes: {
         '/main': (context) => const MainScreen(),
         '/login': (context) => LoginSignup(),
@@ -63,13 +64,33 @@ class ChefBuddyApp extends StatelessWidget {
           final args = settings.arguments as Map<String, String>;
           return MaterialPageRoute(
             builder: (context) => RecipeDetails(
-              recipeName: args['recipeName']!,
-              recipeAuthor: args['recipeAuthor']!,
-              instructions: args['instructions']!,
+              recipeId: args['recipeId']!,
             ),
           );
         }
         return null;
+      },
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasData) {
+          return const MainScreen(); // Authenticated
+        } else {
+          return LoginSignup(); // Not logged in
+        }
       },
     );
   }
@@ -113,3 +134,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
