@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget categorySection() {
-    final categories = ['Lunch', 'Dinner', 'Breakfast', 'Desserts'];
+    final categories = ['Lunch', 'Dinner', 'Breakfast', 'Vegan'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

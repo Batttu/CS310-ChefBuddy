@@ -4,9 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class RecipeDetails extends StatefulWidget {
   final String recipeId;
-
   const RecipeDetails({super.key, required this.recipeId});
-
   @override
   State<RecipeDetails> createState() => _RecipeDetailsState();
 }
@@ -19,9 +17,12 @@ class _RecipeDetailsState extends State<RecipeDetails> {
   bool isFavorite = false;
   bool isZoomed = false;
   final TextEditingController _commentController = TextEditingController();
-  Map<String, Map<String, dynamic>> ingredientDetails = {};
-  Map<String, int> selectedAmounts = {};
   String? userId;
+
+  // Ingredient handling
+  List<Map<String, dynamic>> expandedIngredients = [];
+  bool loadingIngredients = true;
+  final ScrollController _ingredientsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -34,56 +35,52 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   Future<void> fetchRecipe() async {
     final doc = await FirebaseFirestore.instance.collection('recipes').doc(widget.recipeId).get();
-
     if (doc.exists) {
       final data = doc.data()!;
-      final ingredientIds = (data['ingredients'] as List?)?.cast<String>() ?? [];
-      final Map<String, Map<String, dynamic>> details = {};
-
-      for (String id in ingredientIds) {
-        final ingDoc = await FirebaseFirestore.instance.collection('ingredients').doc(id).get();
-        if (ingDoc.exists) {
-          final ingData = ingDoc.data()!;
-          details[id] = {
-            'name': ingData['Name'],
-            'price': ingData['Price'],
-            'stock': ingData['Stock'],
-            'Kg/L': ingData['Kg/L'], // "Kg" or "L"
-          };
-        }
-      }
-
       setState(() {
         recipeData = data;
-        ingredientDetails = details;
-        selectedAmounts = {
-          for (var id in details.keys) id: 0
-        };
       });
-
       await fetchUserRating();
       await fetchAllRatings();
-
       if (userId != null && data['category'] != null) {
         await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('clickedCategories')
-            .doc(data['category'])
+            .collection('users').doc(userId)
+            .collection('clickedCategories').doc(data['category'])
             .set({'clicks': FieldValue.increment(1)}, SetOptions(merge: true));
       }
+      await fetchAndExpandIngredients();
     }
+  }
+
+  Future<void> fetchAndExpandIngredients() async {
+    setState(() { loadingIngredients = true; });
+    final ingredientsArr = recipeData?['ingredients'] as List? ?? [];
+    List<Map<String, dynamic>> result = [];
+    for (final entry in ingredientsArr) {
+      if (entry is Map<String, dynamic> && entry['ingredientId'] != null) {
+        final ingDoc = await FirebaseFirestore.instance
+            .collection('ingredients')
+            .doc(entry['ingredientId'])
+            .get();
+        if (ingDoc.exists) {
+          final meta = ingDoc.data()!;
+          result.add({ ...entry, ...meta });
+        } else {
+          result.add({ ...entry, 'name': '(Unknown)', 'price': null, 'stock': null });
+        }
+      }
+    }
+    setState(() {
+      expandedIngredients = result;
+      loadingIngredients = false;
+    });
   }
 
   Future<void> fetchUserRating() async {
     if (userId == null) return;
     final ratingDoc = await FirebaseFirestore.instance
-        .collection('recipes')
-        .doc(widget.recipeId)
-        .collection('ratings')
-        .doc(userId)
-        .get();
-
+        .collection('recipes').doc(widget.recipeId)
+        .collection('ratings').doc(userId).get();
     if (ratingDoc.exists && ratingDoc.data()?['value'] != null) {
       setState(() {
         _userRating = (ratingDoc.data()!['value'] as num).toDouble();
@@ -97,16 +94,12 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   Future<void> fetchAllRatings() async {
     final snap = await FirebaseFirestore.instance
-        .collection('recipes')
-        .doc(widget.recipeId)
-        .collection('ratings')
-        .get();
-
+        .collection('recipes').doc(widget.recipeId)
+        .collection('ratings').get();
     final List<double> ratings = snap.docs
         .map((doc) => (doc.data()['value'] as num?)?.toDouble())
         .whereType<double>()
         .toList();
-
     setState(() {
       allRatings = ratings;
     });
@@ -114,18 +107,11 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   Future<void> updateUserRating(double newRating) async {
     if (userId == null) return;
-
     await FirebaseFirestore.instance
-        .collection('recipes')
-        .doc(widget.recipeId)
-        .collection('ratings')
-        .doc(userId)
+        .collection('recipes').doc(widget.recipeId)
+        .collection('ratings').doc(userId)
         .set({'value': newRating});
-
-    setState(() {
-      _userRating = newRating;
-    });
-
+    setState(() { _userRating = newRating; });
     await fetchAllRatings();
   }
 
@@ -136,50 +122,34 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   Future<void> fetchComments() async {
     final snap = await FirebaseFirestore.instance
-        .collection('recipes')
-        .doc(widget.recipeId)
-        .collection('comments')
-        .orderBy('createdAt', descending: true)
-        .get();
-
+        .collection('recipes').doc(widget.recipeId)
+        .collection('comments').orderBy('createdAt', descending: true).get();
     final List<Map<String, dynamic>> fetchedComments = [];
     final Map<String, String> userCache = {};
-
     for (var doc in snap.docs) {
       final data = doc.data();
       final uid = data['userId'] ?? 'unknown';
-
       if (!userCache.containsKey(uid)) {
         final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
         String displayName = 'Unknown';
         if (userDoc.exists && userDoc.data() != null) {
           final user = userDoc.data()!;
           displayName = '${user['name'] ?? ''} ${user['surname'] ?? ''}'.trim();
         }
-
         userCache[uid] = displayName;
       }
-
       data['userName'] = userCache[uid];
       fetchedComments.add(data);
     }
-
-    setState(() {
-      comments = fetchedComments;
-    });
+    setState(() { comments = fetchedComments; });
   }
 
   Future<void> checkFavoriteStatus() async {
     if (userId == null) return;
-
     final favDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('favorites')
-        .doc('list')
+        .collection('users').doc(userId)
+        .collection('favorites').doc('list')
         .get();
-
     final ids = favDoc.data()?['recipeIds'] ?? [];
     setState(() {
       isFavorite = ids.contains(widget.recipeId);
@@ -188,31 +158,18 @@ class _RecipeDetailsState extends State<RecipeDetails> {
 
   Future<void> toggleFavorite() async {
     if (userId == null) return;
-
     final favRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('favorites')
-        .doc('list');
-
+        .collection('users').doc(userId)
+        .collection('favorites').doc('list');
     final snap = await favRef.get();
     List<dynamic> currentFavorites = snap.exists ? (snap.data()?['recipeIds'] ?? []) : [];
-
     bool isInFavorites = currentFavorites.contains(widget.recipeId);
-
     if (isInFavorites) {
-      await favRef.update({
-        'recipeIds': FieldValue.arrayRemove([widget.recipeId])
-      });
+      await favRef.update({'recipeIds': FieldValue.arrayRemove([widget.recipeId])});
     } else {
-      await favRef.set({
-        'recipeIds': FieldValue.arrayUnion([widget.recipeId])
-      }, SetOptions(merge: true));
+      await favRef.set({'recipeIds': FieldValue.arrayUnion([widget.recipeId])}, SetOptions(merge: true));
     }
-
-    setState(() {
-      isFavorite = !isInFavorites;
-    });
+    setState(() { isFavorite = !isInFavorites; });
   }
 
   Widget buildStarRating(double rating, void Function(double) onRate) {
@@ -238,7 +195,6 @@ class _RecipeDetailsState extends State<RecipeDetails> {
     if (recipeData == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     final recipeName = recipeData!['recipeName'] ?? '';
     final recipeAuthor = recipeData!['author'] ?? '';
     final instructions = recipeData!['instructions'] ?? '';
@@ -264,6 +220,23 @@ class _RecipeDetailsState extends State<RecipeDetails> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (recipeData!['imageUrl']?.toString().trim().isNotEmpty == true)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      recipeData!['imageUrl'] ?? '',
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'assets/images/placeholder.jpg',
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
                 Text(recipeName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
@@ -283,9 +256,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     IconButton(
                       icon: Icon(isZoomed ? Icons.zoom_out : Icons.zoom_in),
                       onPressed: () {
-                        setState(() {
-                          isZoomed = !isZoomed;
-                        });
+                        setState(() { isZoomed = !isZoomed; });
                       },
                     )
                   ],
@@ -300,7 +271,6 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Scrollbar(
-                    thumbVisibility: true,
                     child: SingleChildScrollView(
                       child: Text(instructions, style: const TextStyle(color: Colors.black87)),
                     ),
@@ -341,6 +311,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   ],
                 ),
                 const SizedBox(height: 20),
+                // --- INGREDIENTS SECTION ---
                 const Text("Ingredients", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 Container(
                   height: 320,
@@ -350,90 +321,48 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    child: ListView(
-                      children: ingredientDetails.entries.map((entry) {
-                        final id = entry.key;
-                        final data = entry.value;
-                        final name = data['name'];
-                        final price = data['price'];
-                        final stock = (data['stock'] as num?)?.toDouble() ?? 0;
-                        final unitType = data['Kg/L'];
-                        final isKg = unitType == "Kg";
-                        final baseUnit = isKg ? "g" : "ml";
-                        final maxAmount = (stock * 1000).toInt();
-                        final selected = selectedAmounts[id] ?? 0;
-
-                        return Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 4,
-                              )
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("$name (Available: $stock $unitType)", style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove),
-                                    onPressed: () {
-                                      setState(() {
-                                        selectedAmounts[id] = (selected - 100).clamp(0, maxAmount);
-                                      });
-                                    },
-                                  ),
-                                  Text("$selected$baseUnit"),
-                                  IconButton(
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () {
-                                      setState(() {
-                                        selectedAmounts[id] = (selected + 100).clamp(0, maxAmount);
-                                      });
-                                    },
-                                  ),
-                                  const Spacer(),
-                                  IconButton(
-                                    icon: const Icon(Icons.shopping_cart),
-                                    onPressed: () async {
-                                      if (userId == null || selected == 0) return;
-                                      final totalPrice = price * (selected / 1000);
-                                      await FirebaseFirestore.instance
-                                          .collection('users')
-                                          .doc(userId)
-                                          .collection('incart')
-                                          .doc(id)
-                                          .set({
-                                        'name': name,
-                                        'amount': selected,
-                                        'unit': baseUnit,
-                                        'price': price,
-                                        'totalPrice': totalPrice,
-                                      });
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("$selected$baseUnit of $name added to cart")),
-                                      );
-                                    },
-                                  )
-                                ],
+                  child: loadingIngredients
+                    ? Center(child: CircularProgressIndicator())
+                    : Scrollbar(
+                        controller: _ingredientsScrollController,
+                        thumbVisibility: true,
+                        child: ListView.builder(
+                          controller: _ingredientsScrollController,
+                          itemCount: expandedIngredients.length,
+                          itemBuilder: (context, index) {
+                            final ing = expandedIngredients[index];
+                            final name = ing['name'] ?? '';
+                            final amount = ing['amount'] ?? '';
+                            final unit = ing['unit'] ?? '';
+                            final price = ing['price'];
+                            final stock = ing['stock'];
+                            return ListTile(
+                              title: Text("$amount $unit $name"),
+                              subtitle: Text("Price: ${price ?? '-'} | Stock: ${stock ?? '-'}"),
+                              trailing: IconButton(
+                                icon: Icon(Icons.shopping_cart),
+                                onPressed: userId == null ? null : () async {
+                                  await FirebaseFirestore.instance
+                                    .collection('users').doc(userId)
+                                    .collection('cart')
+                                    .add({
+                                      'ingredientId': ing['ingredientId'],
+                                      'name': name,
+                                      'amount': amount,
+                                      'unit': unit,
+                                      'price': price,
+                                    });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Added $amount $unit $name to cart!")),
+                                  );
+                                },
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          },
+                        ),
                     ),
-                  ),
                 ),
+                // --- END INGREDIENTS SECTION ---
                 const SizedBox(height: 20),
                 const Text("Comments", style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
@@ -442,7 +371,6 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
                   child: Scrollbar(
-                    thumbVisibility: true,
                     child: comments.isEmpty
                         ? const Center(child: Text("No comments yet."))
                         : ListView.builder(
@@ -465,8 +393,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         final text = _commentController.text.trim();
                         if (text.isNotEmpty) {
                           await FirebaseFirestore.instance
-                              .collection('recipes')
-                              .doc(widget.recipeId)
+                              .collection('recipes').doc(widget.recipeId)
                               .collection('comments')
                               .add({
                             'text': text,
